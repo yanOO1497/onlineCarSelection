@@ -1,4 +1,4 @@
-var speedX=0,speedY=0,posZ=500,flag=false;
+var speedX=0,speedY=0,flag=false;
 var renderer,camera,scene,cube,width,height;
 
 function initThree() {
@@ -8,6 +8,7 @@ function initThree() {
         antialias : true
     });
     renderer.setSize(width, height);
+    renderer.shadowMapEnabled = true;
     document.getElementById('canvas-frame').appendChild(renderer.domElement);
 }
 function initCamera() {
@@ -59,17 +60,36 @@ function initScene() {
 
 function initObject() {
     //绘制正方形
-    var geometry = new THREE.CubeGeometry(180,180,180);
-    var cubeMe = new THREE.MeshBasicMaterial({color: 0x00ff00});
-    cube = new THREE.Mesh(geometry, cubeMe);
+    let cueGeometry = new THREE.CubeGeometry(180,180,180,6,6,6);
+    let lamMater = new THREE.MeshLambertMaterial  ({color: 0x00ff00,opacity:0.5,emissive: 0xff0000});
+    let normalMater=new THREE.MeshNormalMaterial();
+    let texture = THREE.ImageUtils.loadTexture('./images/plane.png',{},function () {
+        render();
+    });
+    let textMater=new THREE.MeshLambertMaterial({
+        map: texture
+    });
+    let phoneMater=new THREE.MeshPhongMaterial({
+        color: 0xff0000,
+        specular: 0xffff00,
+        shininess: 100
+    });
+    cube = new THREE.Mesh(cueGeometry, textMater);
     scene.add(cube);
-
+    let cube2 = new THREE.Mesh(cueGeometry, normalMater);
+    cube2.position.x=-300;
+    scene.add(cube2);
+    //绘制球体
+    let spGeo=new THREE.SphereGeometry(80,10,10,6,6,6);
+    let sphere= new THREE.Mesh(spGeo, phoneMater);
+    sphere.position.x=300;
+    scene.add(sphere);
     //绘制x,y,z坐标轴
-    var material = new THREE.LineBasicMaterial({
+    let material = new THREE.LineBasicMaterial({
         color: 0x444444,
         opacity: 0.2
     });
-    var line=function(x,y,z){
+    let line=function(x,y,z){
         var lineGeo=new THREE.Geometry();
         lineGeo.vertices.push(
             new THREE.Vector3(0,0,0),
@@ -81,10 +101,10 @@ function initObject() {
     line(500,0,0);
     line(0,500,0);
     line(0,0,500);
-}
 
-function render(){
-    renderer.render(scene, camera);
+    //绘制地面
+
+
 }
 function bindEvent() {
     /**
@@ -140,39 +160,68 @@ function bindEvent() {
 }
 function scrollFunc(e) {//滚轮控制摄像机Z轴运动
     e=e || window.event;
+    let pos=0;
     if(e.wheelDelta){//IE/Opera/Chrome  
         //自定义事件：编写具体的实现逻辑
         if(e.wheelDelta<0){
-            if(posZ<800){
-                posZ+=2;
-            }
+            pos+=2;
         }else {
-            if(posZ>200){
-                posZ-=2;
-            }
+            pos-=2;
         }
     }else if(e.detail){//Firefox  
         //自定义事件：编写具体的实现逻辑
         if(e.detail>0){
-            if(posZ<800){
-                posZ+=2;
-            }
+            pos+=2;
         }else {
-            if(posZ>200){
-                posZ-=2;
-            }
+            pos-=2;
         }
     }
-    camera.position.z=posZ;
+    camera.position.z+=pos;
     render();
+}
+var light,light2,light3;
+function initLight() {
+    //平行光
+    light = new THREE.DirectionalLight(0xFFFFFF);
+    light.position.set(100, 299, 0).normalize();
+    scene.add(light);
+    //环境光
+    light2 = new THREE.AmbientLight(0x999999);
+    scene.add(light2);
+    //点光源
+    light3 = new THREE.SpotLight(0xFFFFFF);
+    light3.position.set(0, 0, 100);
+    // scene.add(light3);
+
+}
+let clock,model3D;
+function load3D() {
+    let loader = new THREE.JSONLoader();
+    loader.load('./bf109e/bf109e.json', function (geometry, materials) {
+        model3D = new THREE.Mesh(geometry, new THREE.MeshFaceMaterial(materials));
+        scene.add(model3D);
+    });
+    // let animation = new THREE.Animation(model3D, model3D.geometry.animations[0]);
+    // animation.play();
+    // clock = new THREE.Clock();
+}
+
+function render(){
+    // let delta = clock.getDelta();
+    // THREE.AnimationHandler.update(delta);
+    renderer.render(scene, camera);
+    // requestAnimationFrame(render);
+    //循环渲染
 }
 
 function threeStart() {
     initThree();
-    bindEvent();
     initCamera();
     initScene();
+    initLight();
     initObject();
+    bindEvent();
+    // load3D();
     render();
 }
 threeStart();
