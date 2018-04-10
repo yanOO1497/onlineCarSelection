@@ -5,7 +5,7 @@ module.exports = {
       main: './js/main.js',
     },
     output: {
-        path:'.././release/js',// 打包后文件存放的地方
+        path:__dirname+'/release/js',// 打包后文件存放的地方
         filename: 'main.js'     // 打包后输出文件的文件名
     },
     module: {

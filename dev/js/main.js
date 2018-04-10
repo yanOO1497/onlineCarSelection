@@ -1,5 +1,6 @@
+var speedX=0,speedY=0,posZ=500,flag=false;
+var renderer,camera,scene,cube,width,height;
 
-var renderer;
 function initThree() {
     width = document.getElementById('canvas-frame').clientWidth;
     height = document.getElementById('canvas-frame').clientHeight;
@@ -8,24 +9,7 @@ function initThree() {
     });
     renderer.setSize(width, height);
     document.getElementById('canvas-frame').appendChild(renderer.domElement);
-    // renderer.setClearColor(0xFFFFFF, 1.0);
 }
-var stats;
-function initStats() {//初始化性能监视器Stats
-    stats = new Stats();
-    stats.setMode(1); // 0: fps, 1: ms
-// 将stats的界面对应左上角
-    stats.domElement.style.position = 'absolute';
-    stats.domElement.style.left = '0px';
-    stats.domElement.style.top = '0px';
-    document.body.appendChild( stats.domElement );
-    setInterval( function () {
-        stats.begin();
-        // 你的每一帧的代码
-        stats.end();
-    }, 1000 / 60 );
-}
-var camera;
 function initCamera() {
     camera = new THREE.PerspectiveCamera(45, width / height, 1, 10000);
     camera.position.x = 100;
@@ -40,7 +24,7 @@ function initCamera() {
     //     z : 100
     // });
 }
-var speedX=0,speedY=0,posZ=500,flag=false;
+
 function rotateAroundWorldAxis(object, axis, radians) {
     var rotWorldMatrix = new THREE.Matrix4();
     rotWorldMatrix.makeRotationAxis(axis.normalize(), radians);
@@ -69,47 +53,10 @@ function retateCube(prams) {
     }
     render();
 }
-var scene;
 function initScene() {
     scene = new THREE.Scene();
 }
 
-var light;
-
-function initLight() {
-    // 半球光就是渐变的光；
-    // 第一个参数是天空的颜色，第二个参数是地上的颜色，第三个参数是光源的强度
-    hemisphereLight = new THREE.HemisphereLight(0xaaaaaa,0x000000, .9);
-
-    // 方向光是从一个特定的方向的照射
-    // 类似太阳，即所有光源是平行的
-    // 第一个参数是关系颜色，第二个参数是光源强度
-    shadowLight = new THREE.DirectionalLight(0xffffff, .9);
-    // 设置光源的方向。
-    // 位置不同，方向光作用于物体的面也不同，看到的颜色也不同
-    shadowLight.position.set(150, 350, 350);
-
-    // 开启光源投影
-    shadowLight.castShadow = true;
-
-    // 定义可见域的投射阴影
-    shadowLight.shadow.camera.left = -400;
-    shadowLight.shadow.camera.right = 400;
-    shadowLight.shadow.camera.top = 400;
-    shadowLight.shadow.camera.bottom = -400;
-    shadowLight.shadow.camera.near = 1;
-    shadowLight.shadow.camera.far = 1000;
-
-    // 定义阴影的分辨率；虽然分辨率越高越好，但是需要付出更加昂贵的代价维持高性能的表现。
-    shadowLight.shadow.mapSize.width = 2048;
-    shadowLight.shadow.mapSize.height = 2048;
-
-    // 为了使这些光源呈现效果，只需要将它们添加到场景中
-    scene.add(hemisphereLight);
-    scene.add(shadowLight);
-
-}
-var cube;
 function initObject() {
     //绘制正方形
     var geometry = new THREE.CubeGeometry(180,180,180);
@@ -140,8 +87,11 @@ function render(){
     renderer.render(scene, camera);
 }
 function bindEvent() {
-    var $render=$(renderer.domElement);
-    var x,y,l;
+    /**
+     * 鼠标拖动控制物体旋转
+     * */
+    let  $render=$(renderer.domElement);
+    let x,y;
     $render.on('mousedown',function (event) {
         x=event.clientX;
         y=event.clientY;
@@ -160,11 +110,33 @@ function bindEvent() {
     $render.on('mouseup',function () {
         console.log('mouseup');
         flag=false;
-    })
+    });
+
+    //鼠标滚动控制摄像机z轴方向运动，距离远近
     if(document.addEventListener){
         document.addEventListener('DOMMouseScroll',scrollFunc,false);
     }//W3C
     window.onmousewheel=document.onmousewheel=scrollFunc;//IE/Opera/Chrome
+
+    //全局监听键盘事件,键盘控制摄像机漫游
+    $(document).keydown(function(event){
+        let code=event.keyCode;
+        switch (code){
+            case 87:
+            case 38:
+                camera.position.y-=10;break;//摄像机向下，物体向上
+            case 83:
+            case 40:
+                camera.position.y+=10;break;//摄像机向上，物体向下
+            case 65:
+            case 37:
+                camera.position.x-=10;break;//摄像机向右，物体向左
+            case 68:
+            case 39:
+                camera.position.x+=10;break;//摄像机向左，物体向右
+        }
+        render();
+    });
 }
 function scrollFunc(e) {//滚轮控制摄像机Z轴运动
     e=e || window.event;
@@ -200,8 +172,7 @@ function threeStart() {
     bindEvent();
     initCamera();
     initScene();
-    initLight();
     initObject();
     render();
 }
-// threeStart();
+threeStart();
