@@ -1,3 +1,4 @@
+
 var renderer;
 function initThree() {
     width = document.getElementById('canvas-frame').clientWidth;
@@ -27,25 +28,44 @@ function initStats() {//初始化性能监视器Stats
 var camera;
 function initCamera() {
     camera = new THREE.PerspectiveCamera(45, width / height, 1, 10000);
-    camera.position.x = 0;
-    camera.position.y = 0;
-    camera.position.z = 500;
-    camera.up.x = 0;
-    camera.up.y = 1;
-    camera.up.z = 0;
+    camera.position.x = 100;
+    camera.position.y = 100;
+    camera.position.z = 1000;
+    // camera.up.x = 0;
+    // camera.up.y = 1;
+    // camera.up.z = 0;
     // camera.lookAt({
     //     x : 0,
     //     y : 0,
-    //     z : -1
+    //     z : 100
     // });
 }
-var speedX=0;
-function setCamera(speedX) {
-    if(speedX){
-        speedX+=0.02;
-        console.log(speedX);
-        camera.rotation.y=speedX;
-        camera.position.set(500*Math.sin(speedX),0,500*Math.cos(speedX));
+var speedX=0,speedY=0,posZ=500,flag=false;
+function rotateAroundWorldAxis(object, axis, radians) {
+    var rotWorldMatrix = new THREE.Matrix4();
+    rotWorldMatrix.makeRotationAxis(axis.normalize(), radians);
+    rotWorldMatrix.multiply(object.matrix);
+    object.matrix = rotWorldMatrix;
+    object.rotation.setFromRotationMatrix(object.matrix);
+}
+function retateCube(prams) {
+    if(prams.speedX){//围绕Y轴旋转
+        if(prams.speedX>0){
+            speedX=0.02;
+        }else{
+            speedX=-0.02;
+        }
+        var axis = new THREE.Vector3(0,1,0);//指定旋转轴，旋转向量，（该向量以旋转物体中心点为起始点）
+        rotateAroundWorldAxis(cube,axis,speedX);//参数：需要旋转的物体，旋转向量，旋转弧度
+    }
+    if(prams.speedY){
+        if(prams.speedY>0){
+            speedY=0.02;
+        }else{
+            speedY=-0.02;
+        }
+        var axis = new THREE.Vector3(1,0,0);//指定旋转轴，旋转向量，（该向量以旋转物体中心点为起始点）
+        rotateAroundWorldAxis(cube,axis,speedY);//参数：需要旋转的物体，旋转向量，旋转弧度
     }
     render();
 }
@@ -92,74 +112,91 @@ function initLight() {
 var cube;
 function initObject() {
     //绘制正方形
-    var geometry = new THREE.CubeGeometry(80,80,80);
+    var geometry = new THREE.CubeGeometry(180,180,180);
     var cubeMe = new THREE.MeshBasicMaterial({color: 0x00ff00});
     cube = new THREE.Mesh(geometry, cubeMe);
     scene.add(cube);
-    //绘制线条
+
+    //绘制x,y,z坐标轴
     var material = new THREE.LineBasicMaterial({
         color: 0x444444,
         opacity: 0.2
     });
-    var lineGeo= new THREE.CubeGeometry();
-    lineGeo.vertices.push(
-        new THREE.Vector3(-500,0,0),
-        new THREE.Vector3(500,0,0)
-    );//定义两个x方向上的点
-    var createLine = function (x,y,isVertical) {
-        var line = new THREE.Line( lineGeo, material);
-        if (x) {
-            line.position.x = x;
-        }
-        if (y) {
-            line.position.y = y;
-        }
-        if (isVertical) {
-            line.rotation.z = 90 * Math.PI / 180;
-        }
-        scene.add( line );
-    };//绘制线条函数
-
-    //绘制网格
-    for (var i = 1, length = 22, half = length / 2; i < length; i++) {
-        createLine(0, (i - half) * 20);
-        createLine((i - half) * 20, 0, true);
+    var line=function(x,y,z){
+        var lineGeo=new THREE.Geometry();
+        lineGeo.vertices.push(
+            new THREE.Vector3(0,0,0),
+            new THREE.Vector3(x,y,z)
+        );//定义两个x方向上的点
+        var line=new THREE.Line( lineGeo, material);
+        scene.add( line);
     }
-
+    line(500,0,0);
+    line(0,500,0);
+    line(0,0,500);
 }
 
 function render(){
-    // renderer.clear();
-
     renderer.render(scene, camera);
-    // requestAnimationFrame(render);
 }
 function bindEvent() {
     var $render=$(renderer.domElement);
-    var flag=false;
     var x,y,l;
     $render.on('mousedown',function (event) {
         x=event.clientX;
-        console.log('mousedown');
+        y=event.clientY;
         flag=true;
-
     })
     $render.on('mousemove',function (event) {
         if(flag){
-            // console.log('mousemove');
-            l=(event.clientX-x)/100;
-            console.log(l);
-            setCamera(l);
+            if((event.clientX-x)!=0){//水平移动
+                retateCube({speedX:(event.clientX-x)/100});
+            }
+            if((event.clientY-y)!=0){
+                retateCube({speedY:(event.clientY-y)/100});
+            }
         }
     })
     $render.on('mouseup',function () {
         console.log('mouseup');
         flag=false;
     })
+    if(document.addEventListener){
+        document.addEventListener('DOMMouseScroll',scrollFunc,false);
+    }//W3C
+    window.onmousewheel=document.onmousewheel=scrollFunc;//IE/Opera/Chrome
 }
+function scrollFunc(e) {//滚轮控制摄像机Z轴运动
+    e=e || window.event;
+    if(e.wheelDelta){//IE/Opera/Chrome  
+        //自定义事件：编写具体的实现逻辑
+        if(e.wheelDelta<0){
+            if(posZ<800){
+                posZ+=2;
+            }
+        }else {
+            if(posZ>200){
+                posZ-=2;
+            }
+        }
+    }else if(e.detail){//Firefox  
+        //自定义事件：编写具体的实现逻辑
+        if(e.detail>0){
+            if(posZ<800){
+                posZ+=2;
+            }
+        }else {
+            if(posZ>200){
+                posZ-=2;
+            }
+        }
+    }
+    camera.position.z=posZ;
+    render();
+}
+
 function threeStart() {
     initThree();
-    // initStats();
     bindEvent();
     initCamera();
     initScene();
