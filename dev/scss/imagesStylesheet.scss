@@ -1,0 +1,12 @@
+$base:40;@mixin ww($size:100% auto){
+  width:r(512);
+  height:r(512);
+  background:url(../images/ww.jpg) no-repeat;
+  background-size:$size;
+}
+@function ww-w(){
+    @return r(512);
+}
+@function ww-h(){
+    @return r(512);
+}

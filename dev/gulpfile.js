@@ -40,9 +40,8 @@ var connect = require('gulp-connect');
 var proxy = require('http-proxy-middleware');
 var sequence = require('run-sequence');
 var _if = require('gulp-if');
-
 var base64 = require('gulp-base64');
-
+var htmlmin = require('gulp-htmlmin');//压缩html代码
 // var project = 'godsLantern';
 
 var src = {
@@ -52,7 +51,7 @@ var src = {
     images: './images/*.{jpg,png,jpeg}',
     lib: './lib/**/*.js'
 };
-var dist = '../release';//输出地址
+var dist = './../release';//输出地址
 var env = 'dev';
 
 gulp.task('css', function() {
@@ -101,19 +100,19 @@ gulp.task('js', function() {
         .pipe(connect.reload())
 });
 
-gulp.task('connect', function() {
+gulp.task('server', function() {
   connect.server({
-    root: './',
+    root: dist,
     livereload: true,
-    port: 8080,
-    middleware: function(connect, opt) {
-        return [
-            proxy('/y20', {
-                target: 'http://localhost:4040',
-                changeOrigin: true
-            })
-        ]
-    }
+    port: 2333,
+    // middleware: function(connect, opt) {
+    //     return [
+    //         proxy('/y20', {
+    //             target: 'http://localhost:4040',
+    //             changeOrigin: true
+    //         })
+    //     ]
+    // }
   });
 });
 
@@ -151,12 +150,11 @@ gulp.task('rev', function() {
             modifyUnreved: modifyUnreved,
             modifyReved: modifyReved
         }))
-        .pipe(gulp.dest(src.views));
+        .pipe(htmlmin({collapseWhitespace: true}))
+        .pipe(gulp.dest(dist))
+        .pipe(connect.reload());  
 });
-gulp.task('lib', function() {
-    gulp.src(src.lib)
-        .pipe(gulp.dest(dist + '/lib'))
-});
+
 //压缩图片
 gulp.task('img', function() {
     return gulp.src(src.images)
@@ -164,7 +162,7 @@ gulp.task('img', function() {
 });
 gulp.task('build', function() {
     env = 'prod';
-    sequence('img','css', 'js', 'rev', 'lib');
+    sequence('img','css', 'js', 'rev');
 });
 
 gulp.task('watch', function() {
@@ -174,4 +172,4 @@ gulp.task('watch', function() {
     gulp.watch(src.js, ['js']);
 });
 
-gulp.task('default', ['connect', 'dev']);
+gulp.task('default', ['server', 'dev']);

@@ -1,3 +1,5 @@
+// var THREE = require('three'); \
+// import THREE from 'three';
 var speedX=0,speedY=0,flag=false;
 var renderer,camera,scene,cube,width,height;
 
@@ -63,7 +65,7 @@ function initObject() {
     let cueGeometry = new THREE.CubeGeometry(180,180,180,6,6,6);
     let lamMater = new THREE.MeshLambertMaterial  ({color: 0x00ff00,opacity:0.5,emissive: 0xff0000});
     let normalMater=new THREE.MeshNormalMaterial();
-    let texture = THREE.ImageUtils.loadTexture('./images/plane.png',{},function () {
+    let texture = THREE.ImageUtils.loadTexture('./images/ww.jpg',{},function () {
         render();
     });
     let textMater=new THREE.MeshLambertMaterial({
