@@ -130,7 +130,6 @@ gulp.task('dev', function() {
 });
 gulp.task('rev', function() {
     var manifest = gulp.src(dist + 'rev/**/*.json');
-
     function modifyUnreved(filename) {
         return filename;
     }
